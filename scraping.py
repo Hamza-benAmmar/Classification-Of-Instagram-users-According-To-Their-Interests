@@ -56,7 +56,6 @@ def format_response(response):
         user['followers_count'] = business_discovery_data.get('followers_count', 0)
         user['posts_count'] = business_discovery_data.get('media_count', 0)
         user['posts'] = business_discovery_data.get('media', {}).get('data', [])
-        save_images_to_folder(user)
     except KeyError as e:
         print("KeyError:", e)
     return user
@@ -78,7 +77,7 @@ else:
 # Get user info and posts for each username, limiting to the first 30 users
 counter = 0
 for username, interests in interests_data.items():
-    if counter >= 10:
+    if counter >=50:
         break
     user_data = get_user_info_and_posts(username, instagram_account_id, access_token)
     user_data['interests'] = interests
