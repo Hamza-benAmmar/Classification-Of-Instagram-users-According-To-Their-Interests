@@ -10,17 +10,13 @@ with open('config.json', 'r') as f:
 instagram_account_id = config['instagram_account_id']
 access_token = config['access_token']
 
-# Function to create folder if not exists
-def create_folder_if_not_exists(folder_path):
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
-# Function to save images to folder
 def save_images_to_folder(user_data):
     username = user_data['username']
-    user_folder = os.path.join('images', username)
-    create_folder_if_not_exists(user_folder)
-    
+    # Replace or remove problematic characters from the username
+    clean_username = ''.join(c for c in username if c.isalnum() or c in {' ', '_', '-'}).rstrip()
+    user_folder = os.path.join('images', clean_username)
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)    
     # Save images
     for post in user_data['posts']:
         media_type = post['media_type']
@@ -39,7 +35,7 @@ def save_images_to_folder(user_data):
                 img_file.write(requests.get(image_url).content)
         else:
             print("Warning: 'media_url' not found for a post.")
-
+            
 # Function to get user info and posts
 def get_user_info_and_posts(username, instagram_account_id, access_token):
     ig_params = {
@@ -69,16 +65,29 @@ def format_response(response):
 with open('output_interests.json', 'r') as f:
     interests_data = json.load(f)
 
-# Get user info and posts for each username
-users = []
+json_filename = 'users.json'
+
+# Check if the JSON file exists
+if os.path.exists(json_filename):
+    # Load existing data from the JSON file
+    with open(json_filename, 'r') as f:
+        existing_data = json.load(f)
+else:
+    existing_data = []
+
+# Get user info and posts for each username, limiting to the first 30 users
+counter = 0
 for username, interests in interests_data.items():
+    if counter >= 10:
+        break
     user_data = get_user_info_and_posts(username, instagram_account_id, access_token)
     user_data['interests'] = interests
     print(user_data)
-    users.append(user_data)
+    existing_data.append(user_data)
+    counter += 1
 
-# Print or do whatever you want with the users data
-print(users)
+# Write the updated data back to the JSON file
+with open(json_filename, 'w') as f:
+    json.dump(existing_data, f, indent=4)
 
-
-
+print("User data for the first 30 users has been saved to", json_filename)
